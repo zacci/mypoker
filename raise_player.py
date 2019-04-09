@@ -5,9 +5,11 @@ import pprint
 class RaisedPlayer(BasePokerPlayer):
 
   def declare_action(self, valid_actions, hole_card, round_state):
-    # print("Raise Player")
-    # print("Valid Actions : ")
-    # pprint.pprint(valid_actions)
+    print("Raise Player")
+    print("Valid Actions : ")
+    pprint.pprint(valid_actions)
+    pprint.pprint(round_state)
+    print(estimate_hole_card_win_rate(nb_simulation=1000, nb_player=2, hole_card=hole_card, community_card=community_card))
     for i in valid_actions:
         if i["action"] == "raise":
             action = i["action"]
