@@ -4,12 +4,41 @@ import pprint
 
 class RaisedPlayer(BasePokerPlayer):
 
+  @classmethod
+  def __get_tree(self, round_state):
+    hist = round_state['action_histories']
+    game_string = "#########"
+    #pprint.pprint(round_state)
+    for i in hist['preflop']:
+      game_string = game_string + i['action'][0]
+    game_string = game_string + '/'
+    if "flop" in hist and len(hist['flop']) > 0:
+      for i in hist['flop']:
+        game_string = game_string + i['action'][0]
+      game_string = game_string + '/'
+    if "turn" in hist and len(hist['turn']) > 0:
+      for i in hist['turn']:
+        game_string = game_string + i['action'][0]
+      game_string = game_string + '/'
+    if "river" in hist and len(hist['river']) > 0:
+      for i in hist['river']:
+        game_string = game_string + i['action'][0]
+      game_string = game_string + '/'      
+    return game_string
+
+  @classmethod
+  def writing(self,treedict):
+    target = open('gametreelist.txt', 'a')
+    target.write(str(treedict))
+
+  def reading(self):
+    treedict = open('gametreelist.txt', 'r')
+    return treedict
+
   def declare_action(self, valid_actions, hole_card, round_state):
-    print("Raise Player")
-    print("Valid Actions : ")
-    pprint.pprint(valid_actions)
-    pprint.pprint(round_state)
-    print(estimate_hole_card_win_rate(nb_simulation=1000, nb_player=2, hole_card=hole_card, community_card=community_card))
+    # print("Raise Player")
+    # print("Valid Actions : ")
+    # pprint.pprint(valid_actions)
     for i in valid_actions:
         if i["action"] == "raise":
             action = i["action"]
@@ -44,6 +73,7 @@ class RaisedPlayer(BasePokerPlayer):
     pprint.pprint(round_state)
     # while True:
     #   pass
+    print(self.__get_tree(round_state))    
     print("---------------")
     #pass
 
