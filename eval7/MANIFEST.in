@@ -1,1 +1,0 @@
-recursive-include eval7 *.pyx *.px[di] *.h *.c

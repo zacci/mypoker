@@ -9,28 +9,44 @@ class ZacciPlayer(BasePokerPlayer):
   #   BasePokerPlayer.__init__(self)
   #   self.round_count = 0
 
+  def get_tree(self, round_state):
+    hist = round_state['action_histories']
+    game_string = "#"
+    #pprint.pprint(round_state)
+    for i in hist['preflop']:
+      game_string = game_string + i['action'][0]
+    game_string = game_string + '/'
+    if "flop" in hist and len(hist['flop']) > 0:
+      for i in hist['flop']:
+        game_string = game_string + i['action'][0]
+      game_string = game_string + '/'
+    if "turn" in hist and len(hist['turn']) > 0:
+      for i in hist['turn']:
+        game_string = game_string + i['action'][0]
+      game_string = game_string + '/'
+    if "river" in hist and len(hist['river']) > 0:
+      for i in hist['river']:
+        game_string = game_string + i['action'][0]
+      game_string = game_string + '/'      
+    return game_string
+  
+  def evaluate_hs(self,game_state):
+    hole_cards = gen_cards(self._getcards(game_state))
+    community_cards = self._getboard(game_state)
+    hs = estimate_hole_card_win_rate(100,2, hole_cards,community_cards)
+    percentile = self._myround(hs*100)
+    return percentile
+
   def declare_action(self, valid_actions, hole_card, round_state):
-    print("Honest Player")
-    print("Valid Actions : ")
-    pprint.pprint(valid_actions)
-    community_card = round_state['community_card']
-    win_rate = estimate_hole_card_win_rate(
-            nb_simulation= 1000,
-            nb_player=2,
-            hole_card=gen_cards(hole_card),
-            community_card=gen_cards(community_card)
-            )
-    print("Winrate: " + str(win_rate))
+    
+    pprint.pprint(round_state)
+    tree = self.get_tree(round_state)
+    sigma = pickle.load(open("strategy.pickle", "rb"))
     r = rand.random()
-    if r <= 0.5:
-      call_action_info = valid_actions[1]
-    elif r<= 0.9 and len(valid_actions ) == 3:
-      call_action_info = valid_actions[2]
-    else:
-      call_action_info = valid_actions[0]
-    action = call_action_info["action"]
-    print("Taken Actions : ")
-    pprint.pprint(action)
+    plist = []
+    for action in valid_actions:
+      plist.append
+      
     return action  # action returned here is sent to the poker engine
 
   def receive_game_start_message(self, game_info):
@@ -42,7 +58,6 @@ class ZacciPlayer(BasePokerPlayer):
   def receive_round_start_message(self, round_count, hole_card, seats):
     # print("My ID : "+self.uuid+", round count : "+str(round_count)+", hole card : "+str(hole_card))
     # pprint.pprint(seats)
-    print("-------------------------------")
     pass
 
   def receive_street_start_message(self, street, round_state):
@@ -56,8 +71,8 @@ class ZacciPlayer(BasePokerPlayer):
     # pprint.pprint(round_state)
     # print("\n\n")
     # self.round_count = self.round_count + 1
-    print("Honest Player")
+    print("Zacci Player")
     pass
 
 def setup_ai():
-  return RandomPlayer()
+  return ZacciPlayer()

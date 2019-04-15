@@ -6,7 +6,13 @@ from cfrminimizer import CFRBase
 
 import pprint
 
-
-
 cfr = CFRBase()
-cfr._utility_recursive()
+cfr.run()
+
+cfr.game_state = cfr.emulator.apply_action(cfr.game_state[0], 'call', 0)
+pprint.pprint(cfr.game_state)
+
+hole_cards = []
+next_player_pos = cfr.game_state[0]["next_player"]
+hole_cards.append(cfr.game_state[0]['table'].seats.players[next_player_pos].hole_card[0].__str__())
+hole_cards.append(cfr.game_state[0]['table'].seats.players[next_player_pos].hole_card[1].__str__())
