@@ -35,7 +35,7 @@ class CFRBase:
         self.game_state = self.emulator.apply_action(self.game_state[0], 'call', 0)
         self.game_state = self.emulator.apply_action(self.game_state[0], 'call', 0)
         self.game_state = self.emulator.apply_action(self.game_state[0], 'call', 0)
-        #self.game_state = self.emulator.apply_action(self.game_state[0], 'call', 0)
+        self.game_state = self.emulator.apply_action(self.game_state[0], 'call', 0)
 
 
     def get_tree(self,game_state):
@@ -158,7 +158,7 @@ class CFRBase:
                 self.cumulative_regrets[tree][percentile][i] = 0      
         self.cumulative_regrets[tree][percentile][action] += regret
 
-    def _cumulate_sigma(self, game_state, percentile, action, regret):
+    def _cumulate_sigma(self, game_state, percentile, action, prob):
         tree = self.get_tree(game_state)
         available_actions = self._available_actions(game_state)
         if tree not in self.cumulative_sigma:
@@ -169,17 +169,19 @@ class CFRBase:
             self.cumulative_sigma[tree][percentile] = {}
             for i in available_actions:
                 self.cumulative_sigma[tree][percentile][i] = 0      
-        self.cumulative_sigma[tree][percentile][action] += regret
+        self.cumulative_sigma[tree][percentile][action] += prob
 
-    def __update_sigma_recursively(self, game_state, percentile, actions):
+    def __update_sigma_recursively(self, game_state):
         # stop traversal at terminal node
         if self.is_terminal(game_state):
             return
+        percentile = self.evaluate_hs(game_state)
+        self._update_sigma(self,game_state,percentile)
         # go to subtrees
-        for k in node.children:
-            self.__update_sigma_recursively(node.children[k])
+        for action in self.available_actions(game_state):
+            self.__update_sigma_recursively(self._state_play(game_state,action))
 
-    def _update_sigma(self, game_state, percentile, action):
+    def _update_sigma(self, game_state, percentile):
         tree = self.get_tree(game_state)
         rgrt_sum = sum(filter(lambda x : x > 0, self.cumulative_regrets[tree][percentile].values()))
         nr_of_actions = len(self.cumulative_regrets[tree][percentile].keys())
@@ -188,14 +190,14 @@ class CFRBase:
         
     def _utility_recursive(self,game_state, reach_sb, reach_bb):
 
-        print("Current State--------")
-        print(self.get_tree(game_state))
-        pprint.pprint(self.game_state[1][-1]['round_state']['community_card'])
+
         children_states_utilities = {}
         if self.is_terminal(game_state):
             return self.state_evaluation(game_state)
 
-        
+        print("Current State--------")
+        print(self.get_tree(game_state))
+        pprint.pprint(game_state[1][-1]['round_state']['community_card'])
         value = 0.
         percentile = self.evaluate_hs(game_state)
         for action in self._available_actions(game_state):
@@ -203,7 +205,7 @@ class CFRBase:
             child_reach_sb = reach_sb * ( probability if self._statetomove(game_state) == 1 else 1)
             child_reach_bb = reach_bb * ( probability if self._statetomove(game_state) == -1 else 1)
 
-            child_state_utility = self._utility_recursive(self._state_play(game_state,action,),reach_sb,reach_bb)
+            child_state_utility = self._utility_recursive(self._state_play(game_state,action),reach_sb,reach_bb)
 
             value +=  (probability * child_state_utility)
             
@@ -219,3 +221,8 @@ class CFRBase:
             self._cumulate_sigma(game_state, percentile, action, reach * self.getsigma(game_state,percentile,action))
         self.store_data()
         return value
+
+    def run(self, iterations = 1):
+        for _ in range(0, iterations):
+            self._cfr_utility_recursive(self.game_state, 1, 1)
+            self.__update_sigma_recursively(game_state)
