@@ -123,15 +123,13 @@ class CFRBase:
         return int(base * round(float(x)/base))
 
     def evaluate_hs(self,game_state):
-        self.game_state = game_state ##debug
-        pprint.pprint(game_state[1])
-        print('evaluating hs')
+        #print('evaluating hs')
         hole_cards = gen_cards(self._getcards(game_state))
-        print('hole cards = ' + str(self._getcards(game_state)))
+        #print('hole cards = ' + str(self._getcards(game_state)))
         community_cards = self._getboard(game_state)
-        print('community = ' + str(self._getboard(game_state)))
+        #print('community = ' + str(self._getboard(game_state)))
         hs = estimate_hole_card_win_rate(1000,2, hole_cards,community_cards)
-        print('hs = ' + str(hs))
+        #print('hs = ' + str(hs))
         percentile = self._myround(hs*100)
         return percentile
 
@@ -170,13 +168,13 @@ class CFRBase:
     
         
     def _utility_recursive(self,game_state, reach_sb, reach_bb):
-        percentile = self.evaluate_hs(game_state)
         children_states_utilities = {}
         if self.is_terminal(game_state):
             return self.state_evaluation(game_state)
 
         
         value = 0.
+        percentile = self.evaluate_hs(game_state)
         for action in self._available_actions(game_state):
             probability = self.getsigma(game_state,percentile,action)
             child_reach_sb = reach_sb * ( probability if self._statetomove(game_state) == 1 else 1)
@@ -195,7 +193,10 @@ class CFRBase:
             action_cfr_regret = self._statetomove(game_state) * cfr_reach * (children_states_utilities[action] - value)
 
             self._cumulate_cfr_regret(game_state, percentile, action, action_cfr_regret)
-            self._cumulate_sigma(game_state, action, reach * self.getsigma(game_state,percentile,action))
-
+            self._cumulate_sigma(game_state, percentile, action, reach * self.getsigma(game_state,percentile,action))
+        print("##################CUMULATIVE REGRETS#####################")
+        pprint.pprint(self.cumulative_regrets)
+        print("##################CUMULATIVE SIGMA#####################")
+        pprint.pprint(self.cumulative_sigma)
         self.store_data()
-        return utility
+        return value
