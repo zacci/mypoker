@@ -35,7 +35,7 @@ class CFRBase:
         self.game_state = self.emulator.apply_action(self.game_state[0], 'call', 0)
         self.game_state = self.emulator.apply_action(self.game_state[0], 'call', 0)
         self.game_state = self.emulator.apply_action(self.game_state[0], 'call', 0)
-        self.game_state = self.emulator.apply_action(self.game_state[0], 'call', 0)
+        #self.game_state = self.emulator.apply_action(self.game_state[0], 'call', 0)
 
 
     def get_tree(self,game_state):
@@ -138,7 +138,12 @@ class CFRBase:
         return new_game_state
 
     def utility_recursive(self):
-        return self._utility_recursive(self.game_state,1,1)
+        final_value = self._utility_recursive(self.game_state,1,1)
+        print("##################CUMULATIVE REGRETS#####################")
+        pprint.pprint(self.cumulative_regrets)
+        print("##################CUMULATIVE SIGMA#####################")
+        pprint.pprint(self.cumulative_sigma)
+        return final_value
 
     def _cumulate_cfr_regret(self, game_state, percentile, action, regret):
         tree = self.get_tree(game_state)
@@ -165,9 +170,27 @@ class CFRBase:
             for i in available_actions:
                 self.cumulative_sigma[tree][percentile][i] = 0      
         self.cumulative_sigma[tree][percentile][action] += regret
-    
+
+    def __update_sigma_recursively(self, game_state, percentile, actions):
+        # stop traversal at terminal node
+        if self.is_terminal(game_state):
+            return
+        # go to subtrees
+        for k in node.children:
+            self.__update_sigma_recursively(node.children[k])
+
+    def _update_sigma(self, game_state, percentile, action):
+        tree = self.get_tree(game_state)
+        rgrt_sum = sum(filter(lambda x : x > 0, self.cumulative_regrets[tree][percentile].values()))
+        nr_of_actions = len(self.cumulative_regrets[tree][percentile].keys())
+        for a in self.cumulative_regrets[tree][percentile]:        
+            self._sigma[tree][percentile][a] = max(self.cumulative_regrets[tree][percentile][a], 0.) / rgrt_sum if rgrt_sum > 0 else 1. / nr_of_actions        
         
     def _utility_recursive(self,game_state, reach_sb, reach_bb):
+
+        print("Current State--------")
+        print(self.get_tree(game_state))
+        pprint.pprint(self.game_state[1][-1]['round_state']['community_card'])
         children_states_utilities = {}
         if self.is_terminal(game_state):
             return self.state_evaluation(game_state)
@@ -194,9 +217,5 @@ class CFRBase:
 
             self._cumulate_cfr_regret(game_state, percentile, action, action_cfr_regret)
             self._cumulate_sigma(game_state, percentile, action, reach * self.getsigma(game_state,percentile,action))
-        print("##################CUMULATIVE REGRETS#####################")
-        pprint.pprint(self.cumulative_regrets)
-        print("##################CUMULATIVE SIGMA#####################")
-        pprint.pprint(self.cumulative_sigma)
         self.store_data()
         return value
