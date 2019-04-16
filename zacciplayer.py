@@ -1,7 +1,8 @@
 from pypokerengine.players import BasePokerPlayer
 from pypokerengine.utils.card_utils import gen_cards, estimate_hole_card_win_rate
-import random as rand
+import random
 import pprint
+import pickle
 
 class ZacciPlayer(BasePokerPlayer):
 
@@ -15,38 +16,72 @@ class ZacciPlayer(BasePokerPlayer):
     #pprint.pprint(round_state)
     for i in hist['preflop']:
       game_string = game_string + i['action'][0]
-    game_string = game_string + '/'
     if "flop" in hist and len(hist['flop']) > 0:
       for i in hist['flop']:
         game_string = game_string + i['action'][0]
-      game_string = game_string + '/'
     if "turn" in hist and len(hist['turn']) > 0:
       for i in hist['turn']:
         game_string = game_string + i['action'][0]
-      game_string = game_string + '/'
     if "river" in hist and len(hist['river']) > 0:
       for i in hist['river']:
         game_string = game_string + i['action'][0]
-      game_string = game_string + '/'      
     return game_string
   
-  def evaluate_hs(self,game_state):
-    hole_cards = gen_cards(self._getcards(game_state))
-    community_cards = self._getboard(game_state)
-    hs = estimate_hole_card_win_rate(100,2, hole_cards,community_cards)
+  def _myround(self,x, base=10):
+    return int(base * round(float(x)/base))
+  
+  def evaluate_hs(self,round_state,hole_card):
+    hole_cards = gen_cards(hole_card)
+    community_cards = gen_cards(round_state['community_card'])
+    hs = estimate_hole_card_win_rate(200,2, hole_cards,community_cards)
     percentile = self._myround(hs*100)
     return percentile
 
   def declare_action(self, valid_actions, hole_card, round_state):
-    
-    pprint.pprint(round_state)
+
+    #print('------------DECLARING ACTION FOR ZACCI ---------------')
+    #pprint.pprint(round_state)
+    #pprint.pprint(valid_actions)
     tree = self.get_tree(round_state)
     sigma = pickle.load(open("strategy.pickle", "rb"))
-    r = rand.random()
+    percentile = self.evaluate_hs(round_state, hole_card)
+    if percentile not in sigma[tree]:
+        if (min(100, percentile + 5) in sigma[tree]):
+            percentile = (min(100, percentile + 5))
+        elif (max(0, percentile - 5) in sigma[tree]):
+            percentile = (max(0, percentile - 5))
+        elif (min(100, percentile + 10) in sigma[tree]):
+            percentile = (min(100, percentile + 10))
+        elif (max(0, percentile - 10) in sigma[tree]):
+            percentile = (max(0, percentile - 10))
+        elif (min(100, percentile + 20) in sigma[tree]):
+            percentile = (min(100, percentile + 20))
+        elif (max(0, percentile - 20) in sigma[tree]):
+            percentile = (max(0, percentile - 20))
+        elif (min(100, percentile + 30) in sigma[tree]):
+            percentile = (min(100, percentile + 30))
+        elif (max(0, percentile - 30) in sigma[tree]):
+            percentile = (max(0, percentile - 30))
+        elif (min(100, percentile + 40) in sigma[tree]):
+            percentile = (min(100, percentile + 40))
+        elif (max(0, percentile - 40) in sigma[tree]):
+            percentile = (max(0, percentile - 40))
+        elif (min(100, percentile + 50) in sigma[tree]):
+            percentile = (min(100, percentile + 50))
+        elif (max(0, percentile - 50) in sigma[tree]):
+            percentile = (max(0, percentile - 50))
     plist = []
-    for action in valid_actions:
-      plist.append
-      
+    r = random.random()
+    totalprob = 0.
+    # print(str(r))
+    for i in valid_actions:
+      plist.append(sigma[tree][percentile][(i['action'])])
+      # pprint.pprint(plist)
+      totalprob += plist[-1]
+      # print ("r = " + str(r) + ", total prob = " + str(totalprob))
+      if r < totalprob:
+        action = i['action']
+    # print("zacci taken action = " + action)
     return action  # action returned here is sent to the poker engine
 
   def receive_game_start_message(self, game_info):
@@ -71,7 +106,6 @@ class ZacciPlayer(BasePokerPlayer):
     # pprint.pprint(round_state)
     # print("\n\n")
     # self.round_count = self.round_count + 1
-    print("Zacci Player")
     pass
 
 def setup_ai():
