@@ -236,7 +236,7 @@ class CFRBase:
             self._cumulate_sigma(game_state, percentile, action, reach * self.getsigma(game_state,percentile,action))
         return value
 
-    def run(self, iterations = 20):
+    def run(self, iterations = 1):
         print(datetime.datetime.now())
         for myiter in range(0, iterations):
             #initialize new game state with new hole cards
@@ -263,5 +263,5 @@ class CFRBase:
             
             self.store_data()
             print('data stored,  i = ' + str(myiter) )
-            #print(datetime.datetime.now())
+            print(datetime.datetime.now())
         print(datetime.datetime.now())

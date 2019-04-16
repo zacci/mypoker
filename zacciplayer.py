@@ -9,7 +9,8 @@ class ZacciPlayer(BasePokerPlayer):
   # def __init__(self):
   #   BasePokerPlayer.__init__(self)
   #   self.round_count = 0
-
+  debug = False
+  
   def get_tree(self, round_state):
     hist = round_state['action_histories']
     game_string = "#"
@@ -39,12 +40,13 @@ class ZacciPlayer(BasePokerPlayer):
 
   def declare_action(self, valid_actions, hole_card, round_state):
 
-    #print('------------DECLARING ACTION FOR ZACCI ---------------')
-    #pprint.pprint(round_state)
-    #pprint.pprint(valid_actions)
+    if (self.debug): print('------------DECLARING ACTION FOR ZACCI ---------------')
+    if (self.debug): pprint.pprint(round_state)
+    if (self.debug): pprint.pprint(valid_actions)
     tree = self.get_tree(round_state)
     sigma = pickle.load(open("strategy.pickle", "rb"))
     percentile = self.evaluate_hs(round_state, hole_card)
+    if (self.debug): print("Percentile: " + str(percentile))
     if percentile not in sigma[tree]:
         if (min(100, percentile + 5) in sigma[tree]):
             percentile = (min(100, percentile + 5))
@@ -73,15 +75,16 @@ class ZacciPlayer(BasePokerPlayer):
     plist = []
     r = random.random()
     totalprob = 0.
-    # print(str(r))
+    if (self.debug): print(str(r))
     for i in valid_actions:
       plist.append(sigma[tree][percentile][(i['action'])])
-      # pprint.pprint(plist)
+      if (self.debug): pprint.pprint(plist)
       totalprob += plist[-1]
-      # print ("r = " + str(r) + ", total prob = " + str(totalprob))
+      if (self.debug): print ("r = " + str(r) + ", total prob = " + str(totalprob))
       if r < totalprob:
         action = i['action']
-    # print("zacci taken action = " + action)
+        break
+    if (self.debug): print("zacci taken action = " + action)
     return action  # action returned here is sent to the poker engine
 
   def receive_game_start_message(self, game_info):
@@ -102,9 +105,9 @@ class ZacciPlayer(BasePokerPlayer):
     pass
 
   def receive_round_result_message(self, winners, hand_info, round_state):
-    # print("My ID (round result) : "+self.uuid)
-    # pprint.pprint(round_state)
-    # print("\n\n")
+    if (self.debug): print("My ID (round result) : "+self.uuid)
+    if (self.debug): pprint.pprint(round_state)
+    if (self.debug): print("\n\n")
     # self.round_count = self.round_count + 1
     pass
 

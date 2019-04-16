@@ -7,7 +7,7 @@ from cfrminimizer import CFRBase
 import pprint
 
 cfr = CFRBase()
-cfr.run()
+cfr.run(iterations = 15)
 
 cfr.game_state = cfr.emulator.apply_action(cfr.game_state[0], 'call', 0)
 pprint.pprint(cfr.game_state)
